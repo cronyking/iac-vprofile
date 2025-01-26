@@ -12,7 +12,7 @@ env:
 
 jobs:
   terraform:
-    name: "Destroy terraform code"
+    name: "Destroy terraform infrastructure"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,9 +49,9 @@ jobs:
         id: apply
         run: terraform apply -auto-approve -input=false -parallelism=1 destroy-planfile
 
-      - name: Get Kube config file
+      - name: Get Kube config file (for cleanup)
         id: getconfig
-        run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }} 
+        run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
 
       - name: Delete Ingress controller
         run: kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/aws/deploy.yaml
@@ -59,7 +59,7 @@ jobs:
       - name: Delete the Kubernetes cluster (via eksctl or Terraform)
         run: |
           # If you created the cluster using eksctl:
-          # eksctl delete cluster --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          
-          # If you created the cluster using Terraform, you can just run the destroy command from Terraform:
-          terraform destroy -auto-approve
+          eksctl delete cluster --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+          # Alternatively, if you created the cluster using Terraform, you can just run the destroy command:
+          # terraform destroy -auto-approve -input=false
